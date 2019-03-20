@@ -1,0 +1,11 @@
+{
+    "layer_type": "RGCNLayer",
+    "edge_dim": 64,
+    "node_dim": 64,
+    "layer_params": {
+        "n_units": 64,
+        "activation": "relu",
+	    "n_hidden_layers": 3,
+        "dropout": 0.5
+    }
+}

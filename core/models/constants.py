@@ -1,0 +1,22 @@
+GNN_MSG_KEY = 'm'
+GNN_NODE_FEAT_IN_KEY = 'hn_in'
+GNN_NODE_FEAT_OUT_KEY = 'hn_out'
+GNN_EDGE_FEAT_KEY = 'he'
+GNN_AGG_MSG_KEY = 'h_msg'
+GNN_NODE_NORM = 'norm'
+GNN_NODE_LABELS_KEY = 'hnl'
+GNN_NODE_ATTS_KEY = 'hna'
+GNN_EDGE_LABELS_KEY = 'hel'
+GNN_EDGE_NORM = 'norm'
+
+GRAPH_CLASSIFICATION = 'graph_classification'
+NODE_CLASSIFICATION = 'node_classification'
+
+AIFB = 'aifb'
+MUTAG = 'mutag'
+MUTAGENICITY = 'mutagenicity'
+PTC_FM = 'ptc_fm'
+PTC_FR = 'ptc_fr'
+PTC_MM = 'ptc_mm'
+PTC_MR = 'ptc_mr'
+
