@@ -67,7 +67,7 @@ Default config are the same as reported in the paper. `PTC_FR` accuracy around `
 
 ```sh
 cd bin && mkdir ../preprocessed_graphs && cd ../preprocessed_graphs && mkdir aifb && cd ../bin/
-preprocess dglrgcn --dataset aifb --out_folder ../preprocessed_graphs/aifb
+preprocess dglrgcn --dataset aifb --out_folder ../preprocessed_graphs/aifb --reverse_edges True
 run_model --dataset aifb  --config_fpath ../core/models/config_files/config_edGNN_node_class.json  --data_path ../preprocessed_graphs/aifb/ --n-epochs 400 --weight-decay 0 --lr 0.005
 ```
 
