@@ -2,6 +2,8 @@
 
 The ability of a graph neural network (GNN) to leverage both the graph topology and graph labels is fundamental to build discriminative node and graph embeddings. Building on previous work, we theoretically show that our model for directed labeled graphs, edGNN, is as powerful as the Weisfeiler-Lehman algorithm for graph isomorphism. Our experiments support our theoretical findings, confirming that graph neural networks can be effectively used for inference problems on directed graphs with both node and edge labels.
 
+Paper available [[here]](https://arxiv.org/pdf/1904.08745.pdf). 
+
 ## Installation
 
 Create a `virtualenv`:
