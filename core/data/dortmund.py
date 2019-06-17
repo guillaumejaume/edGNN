@@ -33,7 +33,7 @@ SUFFIX = [
     GRAPH_ATT_SUFFIX
 ]
 
-BASE_URL = 'https://ls11-www.cs.uni-dortmund.de/people/morris/graphkerneldatasets/'
+BASE_URL = 'https://ls11-www.cs.tu-dortmund.de/people/morris/graphkerneldatasets/'
 EXTENSION = '.zip'
 
 
