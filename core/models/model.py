@@ -138,8 +138,8 @@ class Model(nn.Module):
                 self.embed_nodes = torch.eye(self.n_entities, self.n_entities)
                 self.node_dim = self.n_entities
         else:
-            if isinstance(g, DGLGraph):  # ie, we are doing node classification
-                self.node_dim = g.number_of_nodes()
+            if isinstance(self.g, DGLGraph):  # ie, we are doing node classification
+                self.node_dim = self.g.number_of_nodes()
             else:
                 raise RuntimeError
             self.embed_nodes = None
