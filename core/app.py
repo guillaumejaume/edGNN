@@ -3,12 +3,15 @@ import numpy as np
 import dgl
 import torch
 from torch.utils.data import DataLoader
+import random
 
 from utils.early_stopping import EarlyStopping
 from utils.io import load_checkpoint
 
 from core.data.constants import LABELS, TRAIN_MASK, TEST_MASK, VAL_MASK, GRAPH
 from core.models.constants import NODE_CLASSIFICATION, GRAPH_CLASSIFICATION
+from core.models.model import Model
+from core.data.constants import GRAPH, N_RELS, N_CLASSES, N_ENTITIES
 
 
 def collate(samples):
@@ -19,18 +22,13 @@ def collate(samples):
 
 class App:
 
-    def __init__(self, model, early_stopping=True):
-        self.model = model
+    def __init__(self, early_stopping=True):
         if early_stopping:
             self.early_stopping = EarlyStopping(patience=100, verbose=True)
 
-    def train(self, data, config, save_path='', mode=NODE_CLASSIFICATION):
+    def train(self, data, model_config, learning_config, save_path='', mode=NODE_CLASSIFICATION):
 
         loss_fcn = torch.nn.CrossEntropyLoss()
-
-        optimizer = torch.optim.Adam(self.model.parameters(),
-                                     lr=config['lr'],
-                                     weight_decay=config['weight_decay'])
 
         labels = data[LABELS]
         # initialize graph
@@ -38,7 +36,21 @@ class App:
             train_mask = data[TRAIN_MASK]
             val_mask = data[VAL_MASK]
             dur = []
-            for epoch in range(config['n_epochs']):
+
+            # create GNN model
+            self.model = Model(g=data[GRAPH],
+                               config_params=model_config,
+                               n_classes=data[N_CLASSES],
+                               n_rels=data[N_RELS] if N_RELS in data else None,
+                               n_entities=data[N_ENTITIES] if N_ENTITIES in data else None,
+                               is_cuda=learning_config['cuda'],
+                               mode=mode)
+
+            optimizer = torch.optim.Adam(self.model.parameters(),
+                                         lr=learning_config['lr'],
+                                         weight_decay=learning_config['weight_decay'])
+
+            for epoch in range(learning_config['n_epochs']):
                 self.model.train()
                 if epoch >= 3:
                     t0 = time.time()
@@ -70,9 +82,35 @@ class App:
         elif mode == GRAPH_CLASSIFICATION:
             self.accuracies = np.zeros(10)
             graphs = data[GRAPH]                 # load all the graphs
-            for k in range(10):                  # 10-fold cross validation
-                start = int(len(graphs)/10) * k
-                end = int(len(graphs)/10) * (k+1)
+
+            # debug purposes: reshuffle all the data before the splitting
+            random_indices = list(range(len(graphs)))
+            random.shuffle(random_indices)
+            graphs = [graphs[i] for i in random_indices]
+            labels = labels[random_indices]
+
+            K = 10
+            for k in range(K):                  # K-fold cross validation
+
+                # create GNN model
+                self.model = Model(g=data[GRAPH],
+                                   config_params=model_config,
+                                   n_classes=data[N_CLASSES],
+                                   n_rels=data[N_RELS] if N_RELS in data else None,
+                                   n_entities=data[N_ENTITIES] if N_ENTITIES in data else None,
+                                   is_cuda=learning_config['cuda'],
+                                   mode=mode)
+
+                optimizer = torch.optim.Adam(self.model.parameters(),
+                                             lr=learning_config['lr'],
+                                             weight_decay=learning_config['weight_decay'])
+
+                if learning_config['cuda']:
+                    self.model.cuda()
+
+                print('\n\n\nProcess new k')
+                start = int(len(graphs)/K) * k
+                end = int(len(graphs)/K) * (k+1)
 
                 # testing batch
                 testing_graphs = graphs[start:end]
@@ -80,16 +118,16 @@ class App:
                 self.testing_batch = dgl.batch(testing_graphs)
 
                 # training batch
-                training_graphs = graphs[:start] + graphs[end+1:]
+                training_graphs = graphs[:start] + graphs[end:]
                 training_labels = labels[list(range(0, start)) + list(range(end+1, len(graphs)))]
                 training_samples = list(map(list, zip(training_graphs, training_labels)))
                 training_batches = DataLoader(training_samples,
-                                              batch_size=config['batch_size'],
+                                              batch_size=learning_config['batch_size'],
                                               shuffle=True,
                                               collate_fn=collate)
 
                 dur = []
-                for epoch in range(config['n_epochs']):
+                for epoch in range(learning_config['n_epochs']):
                     self.model.train()
                     if epoch >= 3:
                         t0 = time.time()
