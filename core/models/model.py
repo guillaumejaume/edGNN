@@ -86,23 +86,31 @@ class Model(nn.Module):
 
         self.is_cuda = is_cuda
         self.mode = mode
+        self.config_params = config_params
+        self.n_rels = n_rels
+        self.n_classes = n_classes
+        self.n_entities = n_entities
+        self.g = g
 
         layer_type = config_params["layer_type"]
 
         module = importlib.import_module(MODULE.format(LAYER_MODULES[layer_type]))
-        Layer = getattr(module, layer_type)
+        self.Layer = getattr(module, layer_type)
+
+        self.build_model()
+
+    def build_model(self):
 
         # Build NN
         self.layers = nn.ModuleList()
-        layer_params = config_params['layer_params']
-        self.g = g
+        layer_params = self.config_params['layer_params']
 
         # Edge embeddings
-        if 'edge_dim' in config_params:
-            self.edge_dim = config_params['edge_dim']
-            self.embed_edges = nn.Embedding(n_rels, self.edge_dim)
-        elif 'edge_one_hot' in config_params:
-            self.edge_dim = n_rels
+        if 'edge_dim' in self.config_params:
+            self.edge_dim = self.config_params['edge_dim']
+            self.embed_edges = nn.Embedding(self.n_rels, self.edge_dim)
+        elif 'edge_one_hot' in self.config_params:
+            self.edge_dim = self.n_rels
             self.embed_edges = torch.eye(self.edge_dim, self.edge_dim)
             if self.is_cuda:
                 self.embed_edges = self.embed_edges.cuda()
@@ -114,43 +122,44 @@ class Model(nn.Module):
         if self.mode == NODE_CLASSIFICATION:
             deg, deg_ids = compute_node_degrees(self.g)
             n_node_degs = torch.max(deg_ids) + 1
-            self.g.ndata[GNN_NODE_LABELS_KEY] = deg_ids.cuda() if is_cuda else deg_ids
+            self.g.ndata[GNN_NODE_LABELS_KEY] = deg_ids.cuda() if self.is_cuda else deg_ids
 
-        if 'node_dim' in config_params:
-            self.node_dim = config_params['node_dim']
-            if n_entities is None:
+        if 'node_dim' in self.config_params:
+            self.node_dim = self.config_params['node_dim']
+            if self.n_entities is None:
                 self.embed_nodes = nn.Embedding(n_node_degs, self.node_dim)
             else:
-                self.embed_nodes = nn.Embedding(n_entities, self.node_dim)
-        elif 'node_one_hot' in config_params:
-            if n_entities is None:
+                self.embed_nodes = nn.Embedding(self.n_entities, self.node_dim)
+        elif 'node_one_hot' in self.config_params:
+            if self.n_entities is None:
                 self.embed_nodes = torch.eye(n_node_degs, n_node_degs)
                 self.node_dim = n_node_degs
             else:
-                self.embed_nodes = torch.eye(n_entities, n_entities)
-                self.node_dim = n_entities
+                self.embed_nodes = torch.eye(self.n_entities, self.n_entities)
+                self.node_dim = self.n_entities
         else:
-            if isinstance(g, DGLGraph):  # ie, we are doing node classification
-                self.node_dim = g.number_of_nodes()
+            if isinstance(self.g, DGLGraph):  # ie, we are doing node classification
+                self.node_dim = self.g.number_of_nodes()
             else:
                 raise RuntimeError
             self.embed_nodes = None
 
         # basic tests
-        assert(n_classes is not None)
+        assert (self.n_classes is not None)
 
         # build and append layers
         print('\n*** Building model ***')
-        for node_dim, edge_dim, n_out, act, kwargs in layer_build_args(self.node_dim, self.edge_dim, n_classes, layer_params, self.mode):
+        for node_dim, edge_dim, n_out, act, kwargs in layer_build_args(self.node_dim, self.edge_dim, self.n_classes,
+                                                                       layer_params, self.mode):
             print('* Building new layer with args:', node_dim, edge_dim, n_out, act, kwargs)
-            self.layers.append(Layer(self.g, node_dim, edge_dim, n_out, act, **kwargs))
+            self.layers.append(self.Layer(self.g, node_dim, edge_dim, n_out, act, **kwargs))
         print('*** Model successfully built ***\n')
 
         # build readout function if graph classification
         if self.mode == GRAPH_CLASSIFICATION:
             n_hidden = layer_params['n_units']
             n_hidden = n_hidden[-1] if isinstance(n_hidden, list) else n_hidden
-            self.readout = nn.Linear(layer_params['n_hidden_layers'] * n_hidden, n_classes)
+            self.readout = nn.Linear(layer_params['n_hidden_layers'] * n_hidden, self.n_classes)
 
     def forward(self, g):
 
