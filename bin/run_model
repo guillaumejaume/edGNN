@@ -66,10 +66,10 @@ def main(args):
         model.cuda()
 
     # 1. Training
-    app = App(model)
-    config = {'lr': args.lr, 'n_epochs': args.n_epochs, 'weight_decay': args.weight_decay, 'batch_size': args.batch_size}
+    app = App()
+    learning_config = {'lr': args.lr, 'n_epochs': args.n_epochs, 'weight_decay': args.weight_decay, 'batch_size': args.batch_size, 'cuda': cuda}
     print('\n*** Start training ***\n')
-    app.train(data, config, default_path, mode=mode)
+    app.train(data, config_params[0], learning_config, default_path, mode=mode)
 
     # 2. Testing
     print('\n*** Start testing ***\n')
