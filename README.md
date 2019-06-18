@@ -55,7 +55,7 @@ preprocess dortmund --dataset ptc_fr --out_folder ../preprocessed_graphs/ptc_fr/
 run_model --dataset ptc_fr  --config_fpath ../core/models/config_files/config_edGNN_graph_class.json  --data_path ../preprocessed_graphs/ptc_fr/ --n-epochs 40
 ```
 
-Default config are the same as reported in the paper. `PTC_FR` accuracy around `88%`.  
+Default config are the same as reported in the paper. `PTC_FR` accuracy around `66%`.  
 
 (ii) with R-GCN:
 
@@ -63,7 +63,7 @@ Default config are the same as reported in the paper. `PTC_FR` accuracy around `
 run_model --dataset ptc_fr  --config_fpath ../core/models/config_files/config_RGCN_graph_class.json  --data_path ../preprocessed_graphs/ptc_fr/ --n-epochs 40
 ```
 
-Default config are the same as reported in the paper. `PTC_FR` accuracy around `86%`.  
+Default config are the same as reported in the paper. `PTC_FR` accuracy around `65%`.  
 
 ### b. Node classification of the AIFB dataset:
 
