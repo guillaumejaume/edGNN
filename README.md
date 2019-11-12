@@ -24,6 +24,12 @@ Install the package as editable and any dependencies:
 pip3 install -e .
 ```
 
+Add the repository path to your `PYTHONPATH`:
+
+```sh
+export PYTHONPATH="<PATH>/edGNN:$PYTHONPATH"
+```
+
 ## Train a model
 
 a. Preprocess:
