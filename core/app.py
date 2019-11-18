@@ -4,6 +4,7 @@ import dgl
 import torch
 from torch.utils.data import DataLoader
 import random
+from sklearn.model_selection import KFold
 
 from utils.early_stopping import EarlyStopping
 from utils.io import load_checkpoint
@@ -80,17 +81,16 @@ class App:
                     break
 
         elif mode == GRAPH_CLASSIFICATION:
+
+            # @TODO leave one out fold for testing.
+
             self.accuracies = np.zeros(10)
             graphs = data[GRAPH]                 # load all the graphs
+            num_samples = len(graphs)
+            num_folds = 10
+            kf = KFold(n_splits=num_folds)
 
-            # debug purposes: reshuffle all the data before the splitting
-            random_indices = list(range(len(graphs)))
-            random.shuffle(random_indices)
-            graphs = [graphs[i] for i in random_indices]
-            labels = labels[random_indices]
-
-            K = 10
-            for k in range(K):                  # K-fold cross validation
+            for k, (train_index, test_index) in enumerate(kf.split(graphs)):
 
                 # create GNN model
                 self.model = Model(g=data[GRAPH],
@@ -109,17 +109,31 @@ class App:
                     self.model.cuda()
 
                 print('\n\n\nProcess new k')
-                start = int(len(graphs)/K) * k
-                end = int(len(graphs)/K) * (k+1)
 
                 # testing batch
-                testing_graphs = graphs[start:end]
-                self.testing_labels = labels[start:end]
+                testing_graphs = [graphs[i] for i in test_index]
+                self.testing_labels = labels[test_index]
                 self.testing_batch = dgl.batch(testing_graphs)
 
-                # training batch
-                training_graphs = graphs[:start] + graphs[end:]
-                training_labels = labels[list(range(0, start)) + list(range(end+1, len(graphs)))]
+                # all training batch (val + train)
+                train_val_graphs = [graphs[i] for i in train_index]
+                trai_val_labels = labels[train_index]
+
+                # extract indices to split train and val
+                random_indices = list(range(len(train_val_graphs)))
+                random.shuffle(random_indices)
+                val_indices = random_indices[:int(num_samples/num_folds)]
+                train_indices = random_indices[int(num_samples/num_folds):]
+
+                # train batch
+                training_graphs = [train_val_graphs[i] for i in train_indices]
+                training_labels = trai_val_labels[train_indices]
+
+                # validation batch
+                validation_graphs = [train_val_graphs[i] for i in val_indices]
+                self.validation_labels = trai_val_labels[val_indices]
+                self.validation_batch = dgl.batch(validation_graphs)
+
                 training_samples = list(map(list, zip(training_graphs, training_labels)))
                 training_batches = DataLoader(training_samples,
                                               batch_size=learning_config['batch_size'],
@@ -147,7 +161,7 @@ class App:
 
                     if epoch >= 3:
                         dur.append(time.time() - t0)
-                    val_acc, val_loss = self.model.eval_graph_classification(self.testing_labels, self.testing_batch)
+                    val_acc, val_loss = self.model.eval_graph_classification(self.validation_labels, self.validation_batch)
                     print("Epoch {:05d} | Time(s) {:.4f} | Train acc {:.4f} | Train loss {:.4f} "
                           "| Val accuracy {:.4f} | Val loss {:.4f}".format(epoch,
                                                                            np.mean(dur) if dur else 0,
@@ -158,7 +172,8 @@ class App:
 
                     is_better = self.early_stopping(val_loss, self.model, save_path)
                     if is_better:
-                        self.accuracies[k] = val_acc
+                        test_acc, _ = self.model.eval_graph_classification(self.testing_labels, self.testing_batch)
+                        self.accuracies[k] = test_acc
 
                     if self.early_stopping.early_stop:
                         print("Early stopping")
