@@ -6,7 +6,8 @@ import torch
 import argparse
 import importlib
 from statistics import mean, pstdev
-
+import uuid
+import os 
 from dgl.data import register_data_args, load_data
 
 from utils.inits import to_cuda
@@ -35,6 +36,10 @@ def main(args):
     else:
         cuda = True
         torch.cuda.set_device(args.gpu)
+
+    fname = args.dataset + str(uuid.uuid4()) + '.json'
+    save_path = os.path.join('../results', fname)
+    print('save_path:', save_path)
 
     module_rgcn = importlib.import_module(MODULE.format('dglrgcn'))
     module_dortmund = importlib.import_module(MODULE.format('dortmund'))
@@ -106,7 +111,8 @@ def main(args):
                          'values': accuracies,
                          'data_path': args.data_path}
         print('result', result)
-        save_results(result, verbose=True)
+
+        save_results(result, path=save_path, verbose=True)
 
         # remove tmp model generated
         remove_model(default_path)
