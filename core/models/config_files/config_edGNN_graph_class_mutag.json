@@ -1,0 +1,15 @@
+{
+  "configs": [
+    {
+      "layer_type": "edGNNLayer",
+      "edge_one_hot": true,
+      "node_one_hot": true,
+      "layer_params": {
+        "n_units": 64,
+        "activation": "relu",
+        "n_hidden_layers": 2,
+        "use_bn": true
+      }
+    }
+  ]
+}
