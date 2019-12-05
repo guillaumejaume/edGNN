@@ -20,7 +20,8 @@ class edGNNLayer(nn.Module):
                  out_feats,
                  activation=None,
                  dropout=None,
-                 bias=None):
+                 bias=None,
+                 use_bn=False):
         """
         edGNN Layer constructor.
 
@@ -43,6 +44,7 @@ class edGNNLayer(nn.Module):
         self.dropout = dropout
         self.edge_dim = edge_dim
         self.bias = bias
+        self.use_bn = use_bn
 
         # 2. create variables
         self._build_parameters()
@@ -68,6 +70,10 @@ class edGNNLayer(nn.Module):
         # Dropout module
         if self.dropout:
             self.dropout = nn.Dropout(p=self.dropout)
+
+        # Batch norm module
+        if self.use_bn:
+            self.bn = nn.BatchNorm1d(self.out_feats)
 
     def gnn_msg(self, edges):
         """
@@ -100,6 +106,9 @@ class edGNNLayer(nn.Module):
 
         if self.dropout:
             h = self.dropout(h)
+
+        if self.use_bn:
+            h = self.bn(h)
 
         return {GNN_NODE_FEAT_OUT_KEY: h}
 

@@ -1,7 +1,7 @@
 {
     "layer_type": "RGCNLayer",
-    "edge_dim": 64,
-    "node_dim": 64,
+    "node_one_hot": true,
+    "edge_one_hot": true,
     "layer_params": {
         "n_units": 64,
         "activation": "relu",
