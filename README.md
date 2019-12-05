@@ -58,10 +58,10 @@ For other options to the `run_model` app, refer to the implementation.
 ```sh
 cd bin && mkdir ../preprocessed_graphs && cd ../preprocessed_graphs && mkdir ptc_fr && cd ../bin/
 preprocess dortmund --dataset ptc_fr --out_folder ../preprocessed_graphs/ptc_fr/
-run_model --dataset ptc_fr  --config_fpath ../core/models/config_files/config_edGNN_graph_class.json  --data_path ../preprocessed_graphs/ptc_fr/ --n-epochs 40
+run_model --dataset ptc_fr  --config_fpath ../core/models/config_files/config_edGNN_graph_class_ptc.json  --data_path ../preprocessed_graphs/ptc_fr/ --n-epochs 40
 ```
 
-Default config are the same as reported in the paper. `PTC_FR` accuracy around `66%`.  
+Default config are the same as reported in the paper. `PTC_FR` accuracy around `65%`.  
 
 (ii) with R-GCN:
 
