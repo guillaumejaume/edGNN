@@ -82,8 +82,6 @@ class App:
 
         elif mode == GRAPH_CLASSIFICATION:
 
-            # @TODO leave one out fold for testing.
-
             self.accuracies = np.zeros(10)
             graphs = data[GRAPH]                 # load all the graphs
             num_samples = len(graphs)
